@@ -26,14 +26,20 @@
         .led {
             border-radius: 50%;
             background-color: red;
-            width: 100px;
-            height: 100px;
-            padding: 5px;
+            width: 5em;
+            height: 5em;
             margin: 5px;
         }
         .modal-card {
             background-color: rgba(0,0,0,0.4) !important;
         }
+        @media only screen and (max-width: 600px) {
+            .led {
+                width: 4em;
+                height: 4em;
+            }
+        }
+
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css" integrity="sha512-HqxHUkJM0SYcbvxUw5P60SzdOTy/QVwA1JJrvaXJv4q7lmbDZCmZaqz01UPOaQveoxfYRv1tHozWGPMcuTBuvQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
