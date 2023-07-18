@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Uplighter</title>
+    <style>
+        .page_header {
+            display: grid;
+            grid-template-columns: auto auto;
+            justify-content: space-between;
+            background-color: #222;
+            color: #48c78e;
+            padding: 5px;
+            font-weight: 900;
+            font-size: x-large;
+        }
+        body {
+            background-color: #333;
+        }
+        .led_row {
+            display: grid;
+            grid-template-columns: auto auto auto auto;
+            justify-content: flex-start;
+        }
+        .led {
+            border-radius: 50%;
+            background-color: red;
+            width: 100px;
+            height: 100px;
+            padding: 5px;
+            margin: 5px;
+        }
+        .modal-card {
+            background-color: rgba(0,0,0,0.4) !important;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css" integrity="sha512-HqxHUkJM0SYcbvxUw5P60SzdOTy/QVwA1JJrvaXJv4q7lmbDZCmZaqz01UPOaQveoxfYRv1tHozWGPMcuTBuvQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <script>
+        const setLedColor = (id, color) => {
+            console.log(id, color);
+            const led = document.getElementById(id);
+            led.style.backgroundColor = color;
+        }
+        const setLedId = (id) => {
+            const ledId = document.getElementById("led_id");
+            ledId.textContent = id;
+        }
+        const getLedId = () => {
+            return Number(document.getElementById("led_id").textContent);
+        }
+        const setModalLedColor = (id) => {
+            const led = document.getElementById(id);
+            const modalLed = document.getElementById('modal_led');
+            modalLed.style.backgroundColor = led.style.backgroundColor;
+        }
+        const colorStringToRGB = (color) => {
+            return color.match(/\d+/g).map(Number);
+        }
+        const rgbToHex = (r,g,b) => {
+            const hexString = `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+            return hexString;
+        }
+        const setColorPickerColor = (id) => {
+            const led = document.getElementById(id);
+            const colorPicker = document.getElementById('color_picker');
+            const ledColor= window.getComputedStyle(led, null).getPropertyValue("background-color");
+            const ledRGB = colorStringToRGB(ledColor);
+            const ledHexColor = rgbToHex(...ledRGB);
+            colorPicker.setAttribute('value', ledHexColor);
+        }
+        const getColorPickerColor = () => {
+            const colorPicker = document.getElementById('color_picker');
+            return colorPicker.value;
+        }
+        const led_onclick = (evt) => {
+            const ledId = evt.target.id;
+            setLedId(ledId);
+            setModalLedColor(ledId)
+            setColorPickerColor(ledId);
+            const modal = document.getElementById("colourModal");
+            openModal(modal);
+        }
+        const openModal = ($el) => {
+            $el.classList.add('is-active');
+        }
+
+        const closeModal = ($el) => {
+            const modal = $el.target.closest('.modal');
+            modal.classList.remove('is-active');
+        }
+        const saveChange = ($el) => {
+            const ledId = getLedId();
+            const selectedColor = getColorPickerColor();
+            setLedColor(ledId, selectedColor);
+            closeModal($el);
+        }
+    </script>
+    <div class="page_header">
+        <span>Uplighter</span>
+        <span>v0.0.1</span>
+    </div>
+    <section class="section">
+        <div class="columns">
+            <div class="column">
+            </div>
+            <div class="column">
+                <div class="led_row">
+                    <div class="led" id="1" onclick="led_onclick(event)"></div>
+                    <div class="led" id="2" onclick="led_onclick(event)"></div>
+                    <div class="led" id="3" onclick="led_onclick(event)"></div>
+                    <div class="led" id="4" onclick="led_onclick(event)"></div>
+                </div>
+                <div class="led_row">
+                    <div class="led" id="5" onclick="led_onclick(event)"></div>
+                    <div class="led" id="6" onclick="led_onclick(event)"></div>
+                    <div class="led" id="7" onclick="led_onclick(event)"></div>
+                    <div class="led" id="8" onclick="led_onclick(event)"></div>
+                </div>
+                <div class="led_row">
+                    <div class="led" id="9" onclick="led_onclick(event)"></div>
+                    <div class="led" id="10" onclick="led_onclick(event)"></div>
+                    <div class="led" id="11" onclick="led_onclick(event)"></div>
+                    <div class="led" id="12" onclick="led_onclick(event)"></div>
+                </div>
+                <div class="led_row">
+                    <div class="led" id="13" onclick="led_onclick(event)"></div>
+                    <div class="led" id="14" onclick="led_onclick(event)"></div>
+                    <div class="led" id="15" onclick="led_onclick(event)"></div>
+                    <div class="led" id="16" onclick="led_onclick(event)"></div>
+                </div>
+            </div>
+            <div class="column">
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+        <div class="content has-text-centered">
+          <p>
+            <strong>Highlighter</strong> by <a href="https://www.charliebenger.com/">Charlie Benger-Stevenson</a>. The source code is licensed
+            <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content
+            is licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
+          </p>
+        </div>
+    </footer>
+    <div class="modal" id="colourModal">
+        <div class="modal-background"></div>
+        <div class="modal-card has-background-grey-dark">
+            <header class="modal-card-head has-background-grey-dark">
+              <p class="modal-card-title has-text-white">Set Color for LED <span id="led_id">0</span></p>
+            </header>
+            <section class="modal-card-body has-background-grey-dark">
+                <div>
+                    <div class="led" id="modal_led"></div>
+                    <input type="color" id="color_picker" value="#FF0000">
+                </div>
+            </section>
+            <footer class="modal-card-foot has-background-grey-dark">
+              <button class="button is-success" onclick="saveChange(event)">Save changes</button>
+              <button class="button" onclick="closeModal(event)">Cancel</button>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>
