@@ -11,8 +11,8 @@
 CRGB leds[NUM_LEDS];
 StaticJsonDocument<250> jsonDocument;
 
-char ssid[] = "Wokwi-GUEST";
-char pass[] = "";
+char ssid[] = "TNCAP373511";
+char pass[] = "AqNGZHA3yFt93GJL";
 int status = WL_IDLE_STATUS;
 int WIFI_LOGIN_ATTEMPTS = 3;
 
@@ -47,6 +47,7 @@ void connect_wifi() {
     print_var("%s", "Failed to connect to wifi", ssid);
   } else {
     print_var("%s", "Connected to wifi", ssid);
+    Serial.println(WiFi.localIP());
   }
 }
 
@@ -60,6 +61,7 @@ void set_led_color(int led_id, int r, int g, int b){
     leds[led_id].red = r;
     leds[led_id].green = g;
     leds[led_id].blue = b;
+    FastLED.show();
 }
 
 int getBody() {
@@ -67,34 +69,48 @@ int getBody() {
         
     }
     String body = server.arg("plain");
+    Serial.println("Body received:");
+    Serial.println(body);
     DeserializationError error = deserializeJson(jsonDocument, body);
     if (error) {
       Serial.print(F("deserializeJson() failed: "));
       Serial.println(error.f_str());
-    return false;
-  }
+      return false;
+    }
+    return true;
 }
 
 void postLed() {
     
     Serial.println("POST /led");
+    int id = server.arg(0).toInt();
     if(getBody() == true) {
-      Serial.println(jsonDocument['led'].as<const char*>());
-      Serial.println(jsonDocument['r'].as<const char*>());
-      Serial.println(jsonDocument['g'].as<const char*>());
-      Serial.println(jsonDocument['b'].as<const char*>());
-    
-      int led = jsonDocument['led'].as<int>();
-      int r = jsonDocument['r'].as<int>();
-      int g = jsonDocument['g'].as<int>();
-      int b = jsonDocument['b'].as<int>();
+      int r = jsonDocument["r"].as<int>();
+      int g = jsonDocument["g"].as<int>();
+      int b = jsonDocument["b"].as<int>();
 
-      set_led_color(led, r, g, b);
+      print_var("%d", "r: ", (char *)r);
+      print_var("%d", "g: ", (char *)g);
+      print_var("%d", "b: ", (char *)b);
+      
+      set_led_color(id, r, g, b);
+      server.send(200, "application/json", "{}");
+      return;
     }
+    server.send(400, "application/json", "{}");
+    return;
 }
 
 void getLed() {
     Serial.println("GET /led");
+    int id = server.arg(0).toInt();
+    StaticJsonDocument<200> doc;
+    String output = "";
+    doc["r"] = leds[id].r;
+    doc["g"] = leds[id].g;
+    doc["b"] = leds[id].b;
+    serializeJsonPretty(doc, output); 
+    server.send(200, "application/json", output);
 }
 
 void postLeds() {
