@@ -15,6 +15,7 @@ char ssid[] = "TNCAP373511";
 char pass[] = "AqNGZHA3yFt93GJL";
 int status = WL_IDLE_STATUS;
 int WIFI_LOGIN_ATTEMPTS = 3;
+byte mac[6];
 
 WebServer server(80);
 
@@ -27,6 +28,29 @@ void print_var(char * placeholder, char * message, char * var){
   strcat(buffer, placeholder);
   snprintf(outputbuffer, buffer_len, buffer, var);
   Serial.println(outputbuffer);
+}
+
+void print_mac(){
+  Serial.print("MAC: ");
+  Serial.print(mac[5],HEX);
+  Serial.print(":");
+  Serial.print(mac[4],HEX);
+  Serial.print(":");
+  Serial.print(mac[3],HEX);
+  Serial.print(":");
+  Serial.print(mac[2],HEX);
+  Serial.print(":");
+  Serial.print(mac[1],HEX);
+  Serial.print(":");
+  Serial.println(mac[0],HEX);
+}
+
+void bytes_to_hex(byte * byte_array, int array_length, char * output){
+  const char hex_chars[]= "0123456789ABCDEF";
+  for(int i=array_length; i >= 0; i--){
+    output[i] = hex_chars[(byte_array[i>>1] >> ((1 - (i&1)) << 2)) & 0xF];
+  }
+  output[array_length] = 0; //Terminate the string
 }
 
 void setup_led_matrix(){
@@ -47,7 +71,9 @@ void connect_wifi() {
     print_var("%s", "Failed to connect to wifi", ssid);
   } else {
     print_var("%s", "Connected to wifi", ssid);
+    WiFi.macAddress(mac);
     Serial.println(WiFi.localIP());
+    print_mac();
   }
 }
 
@@ -66,7 +92,7 @@ void set_led_color(int led_id, int r, int g, int b){
 
 int getBody() {
     if (server.hasArg("plain") == false) {
-        
+        Serial.println("HTML Body expected but not found");
     }
     String body = server.arg("plain");
     Serial.println("Body received:");
@@ -81,7 +107,6 @@ int getBody() {
 }
 
 void postLed() {
-    
     Serial.println("POST /led");
     int id = server.arg(0).toInt();
     if(getBody() == true) {
@@ -111,28 +136,50 @@ void getLed() {
     doc["b"] = leds[id].b;
     serializeJsonPretty(doc, output); 
     server.send(200, "application/json", output);
+    doc = NULL;
 }
 
 void postLeds() {
     Serial.println("POST /leds");
-    getBody();
-    JsonArray array = jsonDocument['leds'].as<JsonArray>();
-    /*
-    for(JsonVariant led : array) {
-        Serial.println((char *)led['led']);
-        Serial.println((char *)led['r']);
-        Serial.println((char *)led['g']);
-        Serial.println((char *)led['b']);
+    int id = server.arg(0).toInt();
+    if(getBody() == true) {
+      JsonArray array = jsonDocument['leds'].as<JsonArray>();
+      
+      for(JsonVariant led : array) {
+          Serial.println(led['r'].as<const char *>());
+          Serial.println(led['g'].as<const char *>());
+          Serial.println(led['b'].as<const char *>());
+          r = led['r'].as<int>();
+          g = led['g'].as<int>();
+          b = led['b'].as<int>();
+          set_led_color(id, r, g, b);
+          r = 0;
+          g = 0;
+          b = 0;
+      }
     }
-    */
 }
 
 void getLeds() {
     Serial.println("GET /leds");
 }
 
+void getIdent() {
+  Serial.println("GET _ident");
+  String output = "";
+  int n = sizeof mac << 1;
+  char mac_string[n + 1];
+  bytes_to_hex(mac, n, mac_string);
+  StaticJsonDocument<200> doc;
+  doc["ident"] = mac_string;
+  serializeJsonPretty(doc, output);
+  server.send(200, "application/json", output);
+  doc = NULL;
+}
+
 void setup_server_routes() {
     Serial.println("Setting up server routes...");
+    server.on("/_ident", HTTP_GET, getIdent);
     server.on("/led", HTTP_POST, postLed);
     server.on("/led", HTTP_GET, getLed);
     server.on("/leds", HTTP_POST, postLeds);
@@ -140,7 +187,6 @@ void setup_server_routes() {
 }
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println("Uplighter starting...");
   setup_led_matrix();
@@ -151,5 +197,5 @@ void setup() {
 
 void loop() {
   server.handleClient();
-  delay(10); // this speeds up the simulation
+  delay(10);
 }
