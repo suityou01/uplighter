@@ -1,15 +1,15 @@
-
+#include <SPIFFS.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
 #include <FastLED.h>
 
-#define NUM_LEDS 60
+#define NUM_LEDS 16
 #define DATA_PIN 5
 #define LED_TYPE    WS2812B
 
 CRGB leds[NUM_LEDS];
-StaticJsonDocument<250> jsonDocument;
+StaticJsonDocument<1536> jsonDocument;
 
 char ssid[] = "TNCAP373511";
 char pass[] = "AqNGZHA3yFt93GJL";
@@ -119,7 +119,9 @@ void postLed() {
       print_var("%d", "b: ", (char *)b);
       
       set_led_color(id, r, g, b);
+      jsonDocument.clear();
       server.send(200, "application/json", "{}");
+      
       return;
     }
     server.send(400, "application/json", "{}");
@@ -129,35 +131,45 @@ void postLed() {
 void getLed() {
     Serial.println("GET /led");
     int id = server.arg(0).toInt();
-    StaticJsonDocument<200> doc;
     String output = "";
-    doc["r"] = leds[id].r;
-    doc["g"] = leds[id].g;
-    doc["b"] = leds[id].b;
-    serializeJsonPretty(doc, output); 
+    jsonDocument["r"] = leds[id].r;
+    jsonDocument["g"] = leds[id].g;
+    jsonDocument["b"] = leds[id].b;
+    serializeJsonPretty(jsonDocument, output); 
+    jsonDocument.clear();
     server.send(200, "application/json", output);
-    doc = NULL;
+    return;
 }
 
 void postLeds() {
     Serial.println("POST /leds");
-    int id = server.arg(0).toInt();
+    int id = 0;
+    int r = 0;
+    int g = 0;
+    int b = 0;
     if(getBody() == true) {
-      JsonArray array = jsonDocument['leds'].as<JsonArray>();
       
-      for(JsonVariant led : array) {
-          Serial.println(led['r'].as<const char *>());
-          Serial.println(led['g'].as<const char *>());
-          Serial.println(led['b'].as<const char *>());
-          r = led['r'].as<int>();
-          g = led['g'].as<int>();
-          b = led['b'].as<int>();
+      for(int i=0; i < NUM_LEDS; i++) {
+          Serial.println(jsonDocument["leds"][i]["id"].as<const char *>());
+          Serial.println(jsonDocument["leds"][i]["r"].as<const char *>());
+          Serial.println(jsonDocument["leds"][i]["g"].as<const char *>());
+          Serial.println(jsonDocument["leds"][i]["b"].as<const char *>());
+          id = jsonDocument["leds"][i]["id"].as<int>();
+          r = jsonDocument["leds"][i]["r"].as<int>();
+          g = jsonDocument["leds"][i]["g"].as<int>();
+          b = jsonDocument["leds"][i]["b"].as<int>();
           set_led_color(id, r, g, b);
+          id = 0;
           r = 0;
           g = 0;
           b = 0;
       }
+      server.send(200, "application/json", "{}");
+      jsonDocument.clear();
+      return;
     }
+    server.send(400, "application/json", "{}");
+    return;
 }
 
 void getLeds() {
@@ -170,11 +182,11 @@ void getIdent() {
   int n = sizeof mac << 1;
   char mac_string[n + 1];
   bytes_to_hex(mac, n, mac_string);
-  StaticJsonDocument<200> doc;
-  doc["ident"] = mac_string;
-  serializeJsonPretty(doc, output);
+  
+  jsonDocument["ident"] = mac_string;
+  serializeJsonPretty(jsonDocument, output);
   server.send(200, "application/json", output);
-  doc = NULL;
+  jsonDocument.clear();
 }
 
 void setup_server_routes() {
