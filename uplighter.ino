@@ -198,9 +198,28 @@ void setup_server_routes() {
     server.on("/leds", HTTP_GET, getLeds);
 }
 
+void setup_spiffs() {
+  if(!SPIFFS.begin(true)){
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+  File file = SPIFFS.open("/index.html");
+  if(!file){
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+  
+  Serial.println("File Content:");
+  while(file.available()){
+    Serial.write(file.read());
+  }
+  file.close();
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Uplighter starting...");
+  setup_spiffs();
   setup_led_matrix();
   connect_wifi();
   setup_server_routes();
